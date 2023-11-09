@@ -47,3 +47,15 @@ and to copy the files to your location, use:
 ```
 $HADOOP_HOME/bin/hdfs dfs -get /mapreduce_output/* output-distr
 ```
+
+## It is an academic project, to verify the mapper-reducer result comare it to the output of the query below on database which has tables with same dataset as in input files:
+/*
+	 * 
+	 * SELECT * FROM imdb00.title_basics b INNER JOIN imdb00.TITLE_PRINCIPALS a ON
+	 * a.TCONST=b.TCONST and a.category in ('actor','actress') and a.NCONST<>'\N'
+	 * INNER join imdb00.title_crew c ON a.TCONST=c.TCONST and c.directors<> '\N'
+	 * and c.directors like '%'||a.NCONST||'%' --check this as dir are comma
+	 * separated Where b.Titletype='movie' AND b.startYear BETWEEN '1950' AND '1960'
+	 * ORDER BY a.TCONST ASC;
+	 * 
+*/

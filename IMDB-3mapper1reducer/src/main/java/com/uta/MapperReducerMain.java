@@ -20,6 +20,7 @@ public class MapperReducerMain {
 		private Text word = new Text();
 		private final static Text outValue = new Text();
 
+		// Mapper for processing title_basics data
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 			StringTokenizer itr = new StringTokenizer(value.toString(), "\n");
 			while (itr.hasMoreTokens()) {
@@ -31,11 +32,11 @@ public class MapperReducerMain {
 				String startYear = result[5];
 				String genre = result[8];
 
-				if (!titleId.equals("\\N") && !startYear.equals("\\N") && titleType.equals("movie")) {// filter for
-																										// tiltleType=movie
+				if (!titleId.equals("\\N") && !startYear.equals("\\N") && titleType.equals("movie")) {
 					int startyear = Integer.parseInt(startYear);
-					if (startyear >= 1950 && startyear <= 1960) { // filter for STARTYEAR in range(1950 and 1960)
-						String midKey = titleType + "\t" + genre + "\t"+ primaryTitle+ "\t" + "startYear." + startYear;
+					if (startyear >= 1950 && startyear <= 1960) {
+						String midKey = titleType + "\t" + genre + "\t" + primaryTitle + "\t" + "startYear."
+								+ startYear;
 						word.set(titleId);
 						outValue.set(midKey);
 						context.write(word, outValue);
@@ -45,6 +46,7 @@ public class MapperReducerMain {
 		}
 	}
 
+	// Mapper for processing title-actors data
 	public static class TokenizerMapper2 extends Mapper<Object, Text, Text, Text> {
 
 		private Text word = new Text();
@@ -61,7 +63,7 @@ public class MapperReducerMain {
 				String actorName = result[2];
 
 				if (!titleId.equals("\\N") && !actorId.equals("\\N")) {
-					String midKey = "actor." + actorId + "\t" +"actorName." + actorName;
+					String midKey = "actor." + actorId + "\t" + "actorName." + actorName;
 					word.set(titleId);
 					outValue.set(midKey);
 					context.write(word, outValue);
@@ -70,6 +72,7 @@ public class MapperReducerMain {
 		}
 	}
 
+	// Mapper for processing title-crew data
 	public static class TokenizerMapper3 extends Mapper<Object, Text, Text, Text> {
 		private Text word = new Text();
 		private final static Text outValue = new Text();
@@ -115,12 +118,10 @@ public class MapperReducerMain {
 				for (int i = 0; i < n; i++) {
 					if (reschk[i].contains("actor.")) {
 						actorid[j] = reschk[i].substring(6);
-						if(i+1<n) {						
-							actorName[j] = reschk[i+1];
+						if (i + 1 < n) {
+							actorName[j] = reschk[i + 1];
 						}
-						
 						j++;
-						
 					}
 					if (reschk[i].contains("director.")) {
 						directorid[l] = reschk[i];
@@ -146,9 +147,9 @@ public class MapperReducerMain {
 					res = res.replace("actor." + actorid[k], "");
 					res = res.replace(actorName[k] + "\t", "");
 					res = res.replace(actorName[k], "");
-					
+
 				}
-				
+
 				for (int m = 0; m < l; m++) {
 					res = res.replace(directorid[m] + "\t", "");
 					res = res.replace(directorid[m], "");
@@ -168,11 +169,11 @@ public class MapperReducerMain {
 	public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
 		long timeStart = System.currentTimeMillis();
 		System.out.println(timeStart);
-		
+
 		Configuration conf = new Configuration();
-		int split = 730*1024*1024; // This is in bytes  //size of large file
+		int split = 730 * 1024 * 1024; // Size of large file in bytes
 		String splitsize = Integer.toString(split);
-		conf.set("mapreduce.input.fileinputformat.split.minsize",splitsize);
+		conf.set("mapreduce.input.fileinputformat.split.minsize", splitsize);
 		Job job = Job.getInstance(conf, "Imdb 3 mapper 1 Reducer");
 		job.setJarByClass(MapperReducerMain.class);
 		MultipleInputs.addInputPath(job, new Path(args[0]), TextInputFormat.class, TokenizerMapper.class);
@@ -189,17 +190,4 @@ public class MapperReducerMain {
 		System.out.println(timeEnd);
 		System.out.println("Time taken by job for completion in millis: " + diff);
 	}
-	/*
-	 * Final matched output w.r.t sql DB query
-	 * 
-	 * 
-	 * 
-	 * SELECT * FROM imdb00.title_basics b INNER JOIN imdb00.TITLE_PRINCIPALS a ON
-	 * a.TCONST=b.TCONST and a.category in ('actor','actress') and a.NCONST<>'\N'
-	 * INNER join imdb00.title_crew c ON a.TCONST=c.TCONST and c.directors<> '\N'
-	 * and c.directors like '%'||a.NCONST||'%' --check this as dir are comma
-	 * separated Where b.Titletype='movie' AND b.startYear BETWEEN '1950' AND '1960'
-	 * ORDER BY a.TCONST ASC;
-	 * 
-	 */
 }
